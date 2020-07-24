@@ -1,0 +1,39 @@
+use std::str::FromStr;
+use crate::dsl::syntax::ast::{Expr, Literal, BinOperator, UnOperator}; 
+
+grammar;
+
+pub Expr: Expr<'input> = { 
+    <left: Expr> <op: ExprOp> <right: Factor> => Expr::BinOp(Box::new(left), op, Box::new(right)), 
+    Factor,
+};
+
+ExprOp: BinOperator = { 
+    "+" => BinOperator::Add,
+    "-" => BinOperator::Sub,
+};
+
+Factor: Expr<'input> = {
+    <left: Factor> <op: FactorOp> <right: Term> => Expr::BinOp(Box::new(left), op, Box::new(right)),
+    Term,
+};
+
+FactorOp: BinOperator = {
+    "*" => BinOperator::Mul,
+    "/" => BinOperator::Div,
+};
+
+Term: Expr<'input> = {
+    Num => Expr::Literal(Literal::Num(<>)), 
+    <op: UnaryOp> <val: Term> => Expr::UnOp(op, Box::new(val)),
+    "(" <Expr> ")"
+};
+
+UnaryOp: UnOperator = {
+    "!" => UnOperator::Not,
+    "+" => UnOperator::Pos,
+    "-" => UnOperator::Neg,
+}
+Num: isize = {
+    r"[0-9]+" => isize::from_str(<>).unwrap()
+};
